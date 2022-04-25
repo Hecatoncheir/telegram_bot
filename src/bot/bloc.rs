@@ -1,15 +1,17 @@
+use std::sync::Arc;
+
 use async_channel::{Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use tokio::task;
+
+use teloxide_core::adaptors::AutoSend;
+use teloxide_core::requests::Requester;
+use teloxide_core::types::{ChatId, Message, ReplyMarkup, Update};
+use teloxide_core::Bot;
 
 use teloxide::dispatching::{Dispatcher, UpdateFilterExt};
 use teloxide::error_handlers::LoggingErrorHandler;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::{dptree, respond};
-use teloxide_core::adaptors::AutoSend;
-use teloxide_core::requests::Requester;
-use teloxide_core::types::{ChatId, Message, ReplyMarkup, Update};
-use teloxide_core::Bot;
-use tokio::task;
 
 pub trait BLoC<Event, State> {
     fn get_controller(&self) -> Arc<Sender<Event>>;
@@ -20,7 +22,7 @@ pub trait BLoC<Event, State> {
 pub struct BotBloc {
     bot: AutoSend<Bot>,
     event_controller: Arc<Sender<BotBlocEvent>>,
-    event_stream: Arc<Mutex<Receiver<BotBlocEvent>>>,
+    event_stream: Arc<Receiver<BotBlocEvent>>,
     state_controller: Arc<Sender<BotBlocState>>,
     state_stream: Arc<Receiver<BotBlocState>>,
 }
@@ -50,7 +52,7 @@ impl BotBloc {
         let (state_controller, state_stream) = async_channel::unbounded::<BotBlocState>();
 
         let event_controller = Arc::new(event_controller);
-        let event_stream = Arc::new(Mutex::new(event_stream));
+        let event_stream = Arc::new(event_stream);
 
         let state_controller = Arc::new(state_controller);
         let state_stream = Arc::new(state_stream);
@@ -68,32 +70,29 @@ impl BotBloc {
         let bot = self.bot.clone();
         let state_controller = self.state_controller.clone();
 
-        let handler =
-            Update::filter_message().branch(
-                dptree::filter(|msg: Message| msg.text().is_some()).endpoint(
-                    |msg: Message,
-                     bot: AutoSend<Bot>,
-                     state_controller: Arc<Sender<BotBlocState>>| async move {
-                        let state = BotBlocState::Update {
-                            chat_id: msg.chat.id.0,
-                            text: msg.text().unwrap().to_string(),
-                        };
-                        state_controller.send(state).await;
+        let handler = Update::filter_message().branch(
+            dptree::filter(|msg: Message| msg.text().is_some()).endpoint(
+                |msg: Message, state_controller: Arc<Sender<BotBlocState>>| async move {
+                    let state = BotBlocState::Update {
+                        chat_id: msg.chat.id.0,
+                        text: msg.text().unwrap().to_string(),
+                    };
+                    state_controller
+                        .send(state)
+                        .await
+                        .expect("Can't send update state.");
 
-                        bot.send_message(msg.chat.id, "This is a group chat.")
-                            .await?;
-
-                        respond(())
-                    },
-                ),
-            );
+                    respond(())
+                },
+            ),
+        );
 
         let dispatch_handler = task::spawn(async move {
+            let ignore_update = |_upd| Box::pin(async {});
+
             Dispatcher::builder(bot.clone(), handler)
                 .dependencies(dptree::deps![bot.clone(), state_controller.clone()])
-                .default_handler(|upd| async move {
-                    println!("Unhandled update: {:?}", upd);
-                })
+                .default_handler(ignore_update)
                 .error_handler(LoggingErrorHandler::with_custom_text(
                     "An error has occurred in the dispatcher",
                 ))
@@ -106,9 +105,12 @@ impl BotBloc {
         tokio::join!(self.subscribe_on_events(), dispatch_handler);
     }
 
+    async fn run_with_handler(&self) {
+        // TODO
+    }
+
     async fn subscribe_on_events(&self) {
         let event_stream = self.event_stream.clone();
-        let event_stream = event_stream.lock().unwrap();
         let state_controller = self.state_controller.clone();
         let bot = self.bot.clone();
 
@@ -163,12 +165,9 @@ mod bot_bloc_test {
         let bot = teloxide::Bot::new(token).auto_send();
 
         let bloc = BotBloc::new(bot);
-        let bloc_reference = Arc::new(bloc);
+        let bloc_reference_counter = Arc::new(bloc);
 
-        let bloc_for_spawn = bloc_reference.clone();
-
-        let bloc_for_run = bloc_reference.clone();
-
+        let bloc_for_spawn = bloc_reference_counter.clone();
         tokio::spawn(async move {
             while let Ok(state) = bloc_for_spawn.get_stream().recv().await {
                 match state {
@@ -185,6 +184,7 @@ mod bot_bloc_test {
             }
         });
 
+        let bloc_for_run = bloc_reference_counter.clone();
         bloc_for_run.run().await;
     }
 }
