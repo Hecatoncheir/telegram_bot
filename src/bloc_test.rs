@@ -6,7 +6,7 @@ mod bot_bloc_test {
 
     #[tokio::test]
     async fn can_send_event_and_get_state() {
-        let token = "";
+        let token = "1380495565:AAEqMVRo78_3RJgmWmPQ8HZnJAuKZaRLUXU";
         let bot = teloxide::Bot::new(token).auto_send();
 
         let bloc = BotBloc::new(bot);
