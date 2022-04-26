@@ -57,30 +57,30 @@ impl BLoC<BotBlocEvent, BotBlocState> for BotBlocMock {
         unimplemented!()
     }
 
+    async fn run_with_webhook(&self, _: String, _: String) {
+        unimplemented!()
+    }
+
     async fn run_with_handler_and_webhook(
         &self,
         _: crate::bloc::BotUpdateHandler,
-        _: &str,
-        _: &str,
+        _: String,
+        _: String,
     ) {
         unimplemented!()
     }
 
-    async fn run_with_webhook(&self, _: &str, _: &str) {
-        unimplemented!()
-    }
-
-    async fn run_with_webhook_tls(&self, _: &str, _: &str, _: &str, _: &str) {
+    async fn run_with_webhook_tls(&self, _: String, _: String, _: String, _: String) {
         unimplemented!()
     }
 
     async fn run_with_handler_and_webhook_tls(
         &self,
         _: crate::bloc::BotUpdateHandler,
-        _: &str,
-        _: &str,
-        _: &str,
-        _: &str,
+        _: String,
+        _: String,
+        _: String,
+        _: String,
     ) {
         unimplemented!()
     }

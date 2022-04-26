@@ -19,6 +19,9 @@ use teloxide::{dptree, respond};
 use crate::bloc_event::BotBlocEvent;
 use crate::bloc_state::BotBlocState;
 
+use crate::webhook::webhook_with_tls::webhook_with_tls;
+use crate::webhook::webhook_without_tls::webhook_without_tls;
+
 pub(crate) type BotUpdateHandler =
     Handler<'static, DependencyMap, Result<(), teloxide_core::RequestError>, DpHandlerDescription>;
 
@@ -30,34 +33,35 @@ pub trait BLoC<Event, State> {
     async fn run(&self);
     async fn run_with_handler(&self, handler: BotUpdateHandler);
 
+    async fn run_with_webhook(&self, webhook: String, host: String);
     async fn run_with_handler_and_webhook(
         &self,
         handler: BotUpdateHandler,
-        webhook: &str,
-        host: &str,
+        webhook: String,
+        host: String,
     );
-    async fn run_with_webhook(&self, webhook: &str, host: &str);
 
     async fn run_with_webhook_tls(
         &self,
-        webhook: &str,
-        host: &str,
-        cert_path: &str,
-        key_path: &str,
+        webhook: String,
+        host: String,
+        cert_path: String,
+        key_path: String,
     );
     async fn run_with_handler_and_webhook_tls(
         &self,
         handler: BotUpdateHandler,
-        webhook: &str,
-        host: &str,
-        cert_path: &str,
-        key_path: &str,
+        webhook: String,
+        host: String,
+        cert_path: String,
+        key_path: String,
     );
 }
 
 #[derive(Clone)]
 pub struct BotBloc {
     bot: AutoSend<Bot>,
+    bot_name: String,
     event_controller: Sender<BotBlocEvent>,
     event_stream: Receiver<BotBlocEvent>,
     state_controller: Sender<BotBlocState>,
@@ -65,12 +69,13 @@ pub struct BotBloc {
 }
 
 impl BotBloc {
-    pub fn new(bot: AutoSend<Bot>) -> BotBloc {
+    pub fn new(bot: AutoSend<Bot>, bot_name: String) -> BotBloc {
         let (event_controller, event_stream) = async_channel::unbounded::<BotBlocEvent>();
         let (state_controller, state_stream) = async_channel::unbounded::<BotBlocState>();
 
         BotBloc {
             bot,
+            bot_name,
             event_controller,
             event_stream,
             state_controller,
@@ -162,32 +167,83 @@ impl BLoC<BotBlocEvent, BotBlocState> for BotBloc {
         let _ = tokio::join!(dispatch_handler, self.subscribe_on_events());
     }
 
-    async fn run_with_handler_and_webhook(&self, _: BotUpdateHandler, _: &str, _: &str) {
-        todo!()
+    async fn run_with_webhook(&self, webhook: String, host: String) {
+        let handler = BotBloc::default_update_handler();
+        self.run_with_handler_and_webhook(handler, webhook, host)
+            .await;
     }
 
-    async fn run_with_webhook(&self, webhook: &str, host: &str) {
-        todo!()
+    async fn run_with_handler_and_webhook(
+        &self,
+        handler: BotUpdateHandler,
+        webhook: String,
+        host: String,
+    ) {
+        let bot = self.bot.clone();
+        let state_controller = self.state_controller.clone();
+
+        let dispatch_handler = task::spawn(async move {
+            let ignore_update = |_upd| Box::pin(async {});
+
+            Dispatcher::builder(bot.clone(), handler)
+                .dependencies(dptree::deps![bot.clone(), state_controller.clone()])
+                .default_handler(ignore_update)
+                .error_handler(LoggingErrorHandler::with_custom_text(
+                    "An error has occurred in the dispatcher",
+                ))
+                .build()
+                .setup_ctrlc_handler()
+                .dispatch_with_listener(
+                    webhook_without_tls(bot, &host, &webhook).await,
+                    LoggingErrorHandler::with_custom_text("An error from the update listener"),
+                )
+                .await;
+        });
+
+        let _ = tokio::join!(dispatch_handler, self.subscribe_on_events());
     }
 
     async fn run_with_webhook_tls(
         &self,
-        webhook: &str,
-        host: &str,
-        cert_path: &str,
-        key_path: &str,
+        webhook: String,
+        host: String,
+        cert_path: String,
+        key_path: String,
     ) {
-        todo!()
+        let handler = BotBloc::default_update_handler();
+        self.run_with_handler_and_webhook_tls(handler, webhook, host, cert_path, key_path)
+            .await;
     }
 
     async fn run_with_handler_and_webhook_tls(
         &self,
         handler: BotUpdateHandler,
-        webhook: &str,
-        host: &str,
-        cert_path: &str,
-        key_path: &str,
+        webhook: String,
+        host: String,
+        cert_path: String,
+        key_path: String,
     ) {
-        todo!()
+        let bot = self.bot.clone();
+        let state_controller = self.state_controller.clone();
+
+        let dispatch_handler = task::spawn(async move {
+            let ignore_update = |_upd| Box::pin(async {});
+
+            Dispatcher::builder(bot.clone(), handler)
+                .dependencies(dptree::deps![bot.clone(), state_controller.clone()])
+                .default_handler(ignore_update)
+                .error_handler(LoggingErrorHandler::with_custom_text(
+                    "An error has occurred in the dispatcher",
+                ))
+                .build()
+                .setup_ctrlc_handler()
+                .dispatch_with_listener(
+                    webhook_with_tls(bot, &host, &webhook, &cert_path, &key_path).await,
+                    LoggingErrorHandler::with_custom_text("An error from the update listener"),
+                )
+                .await;
+        });
+
+        let _ = tokio::join!(dispatch_handler, self.subscribe_on_events());
     }
 }
