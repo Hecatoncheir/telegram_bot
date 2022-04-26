@@ -1,3 +1,6 @@
+#[path = "bloc_test.rs"]
+mod bloc_test;
+
 use std::sync::Arc;
 
 use async_channel::{Receiver, Sender};
@@ -5,7 +8,7 @@ use tokio::task;
 
 use teloxide_core::adaptors::AutoSend;
 use teloxide_core::requests::Requester;
-use teloxide_core::types::{ChatId, Message, ReplyMarkup, Update};
+use teloxide_core::types::{ChatId, Message, Update};
 use teloxide_core::Bot;
 
 use teloxide::dispatching::{Dispatcher, UpdateFilterExt};
@@ -13,9 +16,18 @@ use teloxide::error_handlers::LoggingErrorHandler;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::{dptree, respond};
 
+use crate::bloc_event::BotBlocEvent;
+use crate::bloc_state::BotBlocState;
+
 pub trait BLoC<Event, State> {
     fn get_controller(&self) -> Arc<Sender<Event>>;
     fn get_stream(&self) -> Arc<Receiver<State>>;
+
+    fn run(&self);
+    fn run_with_handler(&self);
+
+    fn run_with_webhook(&self);
+    fn run_with_webhook_tls(&self);
 }
 
 #[derive(Clone)]
@@ -25,25 +37,6 @@ pub struct BotBloc {
     event_stream: Arc<Receiver<BotBlocEvent>>,
     state_controller: Arc<Sender<BotBlocState>>,
     state_stream: Arc<Receiver<BotBlocState>>,
-}
-
-#[derive(Clone)]
-pub enum BotBlocEvent {
-    TextToChatSend {
-        chat_id: i64,
-        text: String,
-    },
-    TextToChatSendWithMarkup {
-        chat_id: i64,
-        text: String,
-        markup: ReplyMarkup,
-    },
-}
-
-#[derive(Clone)]
-pub enum BotBlocState {
-    Update { chat_id: i64, text: String },
-    TextToChatSendSuccessful { chat_id: i64, text: String },
 }
 
 impl BotBloc {
@@ -117,10 +110,10 @@ impl BotBloc {
         for event in event_stream.recv().await {
             match event {
                 BotBlocEvent::TextToChatSend { chat_id, text } => {
-                    bot.send_message(ChatId(chat_id), text.clone()).await;
+                    let _ = bot.send_message(ChatId(chat_id), text.clone()).await;
 
                     let state = BotBlocState::TextToChatSendSuccessful { chat_id, text };
-                    state_controller.send(state).await;
+                    let _ = state_controller.send(state).await;
                 }
                 BotBlocEvent::TextToChatSendWithMarkup {
                     chat_id,
@@ -134,7 +127,7 @@ impl BotBloc {
 
                     let state = BotBlocState::TextToChatSendSuccessful { chat_id, text };
 
-                    state_controller.send(state).await;
+                    let _ = state_controller.send(state).await;
                 }
             }
         }
@@ -147,44 +140,5 @@ impl BLoC<BotBlocEvent, BotBlocState> for BotBloc {
     }
     fn get_stream(&self) -> Arc<Receiver<BotBlocState>> {
         self.state_stream.clone()
-    }
-}
-
-#[cfg(test)]
-mod bot_bloc_test {
-    use crate::bot::bloc::{BLoC, BotBloc, BotBlocEvent, BotBlocState};
-    use std::borrow::BorrowMut;
-    use std::sync::{Arc, Mutex};
-    use teloxide_core::requests::RequesterExt;
-    use tokio::sync::mpsc;
-    use tokio::task;
-
-    #[tokio::test]
-    async fn can_send_event_and_get_state() {
-        let token = "";
-        let bot = teloxide::Bot::new(token).auto_send();
-
-        let bloc = BotBloc::new(bot);
-        let bloc_reference_counter = Arc::new(bloc);
-
-        let bloc_for_spawn = bloc_reference_counter.clone();
-        tokio::spawn(async move {
-            while let Ok(state) = bloc_for_spawn.get_stream().recv().await {
-                match state {
-                    BotBlocState::Update { chat_id, text } => {
-                        let event = BotBlocEvent::TextToChatSend {
-                            chat_id,
-                            text: text.to_string(),
-                        };
-
-                        bloc_for_spawn.get_controller().send(event).await;
-                    }
-                    BotBlocState::TextToChatSendSuccessful { .. } => {}
-                }
-            }
-        });
-
-        let bloc_for_run = bloc_reference_counter.clone();
-        bloc_for_run.run().await;
     }
 }
