@@ -16,11 +16,11 @@ mod bot_bloc_test {
         tokio::spawn(async move {
             while let Ok(state) = bloc_for_spawn.get_stream().recv().await {
                 match state {
-                    BotBlocState::Update { chat_id, text } => {
-                        let event = BotBlocEvent::TextToChatSend {
-                            chat_id,
-                            text: text.to_string(),
-                        };
+                    BotBlocState::UpdateMessage { message } => {
+                        let chat_id = message.chat.id.0;
+                        let text = message.text().unwrap().to_string();
+
+                        let event = BotBlocEvent::TextToChatSend { chat_id, text };
 
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }

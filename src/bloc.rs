@@ -1,8 +1,6 @@
 #[path = "bloc_test.rs"]
 mod bloc_test;
 
-use std::sync::Arc;
-
 use async_channel::{Receiver, Sender};
 use async_trait::async_trait;
 use tokio::task;
@@ -81,22 +79,20 @@ impl BotBloc {
     }
 
     pub fn default_update_handler() -> BotUpdateHandler {
-        Update::filter_message().branch(
-            dptree::filter(|msg: Message| msg.text().is_some()).endpoint(
-                |msg: Message, state_controller: Sender<BotBlocState>| async move {
-                    let state = BotBlocState::Update {
-                        chat_id: msg.chat.id.0,
-                        text: msg.text().unwrap().to_string(),
-                    };
-                    state_controller
-                        .send(state)
-                        .await
-                        .expect("Can't send update state.");
+        let message_handler = |message: Message, state_controller: Sender<BotBlocState>| async move {
+            let state = BotBlocState::UpdateMessage {
+                message: Box::new(message),
+            };
 
-                    respond(())
-                },
-            ),
-        )
+            state_controller
+                .send(state)
+                .await
+                .expect("Can't send update state.");
+
+            respond(())
+        };
+
+        dptree::entry().branch(Update::filter_message().endpoint(message_handler))
     }
 
     async fn subscribe_on_events(&self) {
@@ -104,7 +100,7 @@ impl BotBloc {
         let state_controller = self.state_controller.clone();
         let bot = self.bot.clone();
 
-        for event in event_stream.recv().await {
+        while let Ok(event) = event_stream.recv().await {
             match event {
                 BotBlocEvent::TextToChatSend { chat_id, text } => {
                     let _ = bot.send_message(ChatId(chat_id), text.clone()).await;
@@ -123,7 +119,6 @@ impl BotBloc {
                         .unwrap();
 
                     let state = BotBlocState::TextToChatSendSuccessful { chat_id, text };
-
                     let _ = state_controller.send(state).await;
                 }
             }

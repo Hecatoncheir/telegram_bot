@@ -1,5 +1,7 @@
+use teloxide_core::types::Message;
+
 #[derive(Clone)]
 pub enum BotBlocState {
-    Update { chat_id: i64, text: String },
+    UpdateMessage { message: Box<Message> },
     TextToChatSendSuccessful { chat_id: i64, text: String },
 }
