@@ -11,4 +11,13 @@ pub enum BotBlocEvent {
         text: String,
         markup: ReplyMarkup,
     },
+
+    GetFile {
+        file_id: String,
+    },
+
+    DownloadFile {
+        file_path: String,
+        destination_path: String,
+    },
 }

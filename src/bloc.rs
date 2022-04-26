@@ -3,7 +3,7 @@ mod bloc_test;
 
 use async_channel::{Receiver, Sender};
 use async_trait::async_trait;
-use tokio::task;
+use tokio::{fs, task};
 
 use teloxide_core::adaptors::AutoSend;
 use teloxide_core::requests::Requester;
@@ -15,6 +15,7 @@ use teloxide::error_handlers::LoggingErrorHandler;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::{DependencyMap, Handler};
 use teloxide::{dptree, respond};
+use teloxide_core::net::Download;
 
 use crate::bloc_event::BotBlocEvent;
 use crate::bloc_state::BotBlocState;
@@ -61,7 +62,6 @@ pub trait BLoC<Event, State> {
 #[derive(Clone)]
 pub struct BotBloc {
     bot: AutoSend<Bot>,
-    bot_name: String,
     event_controller: Sender<BotBlocEvent>,
     event_stream: Receiver<BotBlocEvent>,
     state_controller: Sender<BotBlocState>,
@@ -69,13 +69,12 @@ pub struct BotBloc {
 }
 
 impl BotBloc {
-    pub fn new(bot: AutoSend<Bot>, bot_name: String) -> BotBloc {
+    pub fn new(bot: AutoSend<Bot>) -> BotBloc {
         let (event_controller, event_stream) = async_channel::unbounded::<BotBlocEvent>();
         let (state_controller, state_stream) = async_channel::unbounded::<BotBlocState>();
 
         BotBloc {
             bot,
-            bot_name,
             event_controller,
             event_stream,
             state_controller,
@@ -84,8 +83,10 @@ impl BotBloc {
     }
 
     pub fn default_update_handler() -> BotUpdateHandler {
+        let message_filter = |message: Message| message.text().is_some();
+
         let message_handler = |message: Message, state_controller: Sender<BotBlocState>| async move {
-            let state = BotBlocState::UpdateMessage {
+            let state = BotBlocState::Message {
                 message: Box::new(message),
             };
 
@@ -97,7 +98,27 @@ impl BotBloc {
             respond(())
         };
 
-        dptree::entry().branch(Update::filter_message().endpoint(message_handler))
+        let command_filter =
+            |message: Message| message.text().is_some() && message.text().unwrap().starts_with('/');
+
+        let command_handler = |message: Message, state_controller: Sender<BotBlocState>| async move {
+            let state = BotBlocState::Command {
+                message: Box::new(message),
+            };
+
+            state_controller
+                .send(state)
+                .await
+                .expect("Can't send update state.");
+
+            respond(())
+        };
+
+        dptree::entry().branch(
+            Update::filter_message()
+                .branch(dptree::filter(command_filter).endpoint(command_handler))
+                .branch(dptree::filter(message_filter).endpoint(message_handler)),
+        )
     }
 
     async fn subscribe_on_events(&self) {
@@ -125,6 +146,64 @@ impl BotBloc {
 
                     let state = BotBlocState::TextToChatSendSuccessful { chat_id, text };
                     let _ = state_controller.send(state).await;
+                }
+                BotBlocEvent::GetFile { file_id } => {
+                    let file = match bot.get_file(&file_id).await {
+                        Ok(file) => file,
+                        Err(error) => {
+                            let log_message =
+                                format!("Can't get image details. Error: {:?}.", error);
+                            log::warn!("{}", log_message);
+
+                            let state = BotBlocState::GetFileUnsuccessful { file_id };
+                            let _ = state_controller.send(state);
+
+                            return;
+                        }
+                    };
+
+                    let state = BotBlocState::GetFileSuccessful { file_id, file };
+                    let _ = state_controller.send(state);
+                }
+                BotBlocEvent::DownloadFile {
+                    file_path,
+                    destination_path,
+                } => {
+                    let mut image_file = match fs::File::create(&file_path).await {
+                        Ok(file) => file,
+                        Err(error) => {
+                            let log_message = format!("Can't create file. Error: {:?}.", error);
+                            log::warn!("{}", log_message);
+
+                            let state = BotBlocState::DownloadFileUnsuccessful {
+                                file_path,
+                                destination_path,
+                            };
+                            let _ = state_controller.send(state);
+
+                            return;
+                        }
+                    };
+
+                    match bot.download_file(&destination_path, &mut image_file).await {
+                        Ok(_) => {
+                            let state = BotBlocState::DownloadFileSuccessful {
+                                file_path,
+                                destination_path,
+                            };
+                            let _ = state_controller.send(state);
+                        }
+                        Err(error) => {
+                            let log_message = format!("Can't download file. Error: {:?}.", error);
+                            log::warn!("{}", log_message);
+
+                            let state = BotBlocState::DownloadFileUnsuccessful {
+                                file_path,
+                                destination_path,
+                            };
+                            let _ = state_controller.send(state);
+                        }
+                    };
                 }
             }
         }
