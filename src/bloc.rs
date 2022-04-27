@@ -83,8 +83,6 @@ impl BotBloc {
     }
 
     pub fn default_update_handler() -> BotUpdateHandler {
-        let message_filter = |message: Message| message.text().is_some();
-
         let message_handler = |message: Message, state_controller: Sender<BotBlocState>| async move {
             let state = BotBlocState::Message {
                 message: Box::new(message),
@@ -117,7 +115,7 @@ impl BotBloc {
         dptree::entry().branch(
             Update::filter_message()
                 .branch(dptree::filter(command_filter).endpoint(command_handler))
-                .branch(dptree::filter(message_filter).endpoint(message_handler)),
+                .branch(dptree::endpoint(message_handler)),
         )
     }
 
