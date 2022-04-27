@@ -152,7 +152,7 @@ impl BotBloc {
                         Ok(file) => file,
                         Err(error) => {
                             let log_message =
-                                format!("Can't get image details. Error: {:?}.", error);
+                                format!("Can't get file details. Error: {:?}.", error);
                             log::warn!("{}", log_message);
 
                             let state = BotBlocState::GetFileUnsuccessful { file_id };
@@ -169,7 +169,7 @@ impl BotBloc {
                     file_path,
                     destination_path,
                 } => {
-                    let mut image_file = match fs::File::create(&file_path).await {
+                    let mut file = match fs::File::create(&file_path).await {
                         Ok(file) => file,
                         Err(error) => {
                             let log_message = format!("Can't create file. Error: {:?}.", error);
@@ -185,7 +185,7 @@ impl BotBloc {
                         }
                     };
 
-                    match bot.download_file(&destination_path, &mut image_file).await {
+                    match bot.download_file(&destination_path, &mut file).await {
                         Ok(_) => {
                             let state = BotBlocState::DownloadFileSuccessful {
                                 file_path,
