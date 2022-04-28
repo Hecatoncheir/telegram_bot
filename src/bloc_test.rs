@@ -6,11 +6,8 @@ mod bot_bloc_test {
 
     #[tokio::test]
     async fn can_send_event_and_get_state() {
-        let token = "1380495565:AAEqMVRo78_3RJgmWmPQ8HZnJAuKZaRLUXU";
+        let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
-
-        // let me = bot.get_me().send().await.unwrap();
-        // let bot_name = me.user.username.unwrap();
 
         let bloc = BotBloc::new(bot);
         let bloc_reference_counter = Arc::new(bloc);
@@ -24,10 +21,15 @@ mod bot_bloc_test {
                         let text = message.text().unwrap().to_string();
 
                         let event = BotBlocEvent::TextToChatSend { chat_id, text };
-
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }
-                    BotBlocState::TextToChatSendSuccessful { .. } => {}
+                    BotBlocState::Command { message } => {
+                        let chat_id = message.chat.id.0;
+                        let text = message.text().unwrap().to_string();
+
+                        let event = BotBlocEvent::TextToChatSend { chat_id, text };
+                        let _ = bloc_for_spawn.get_controller().send(event).await;
+                    }
                     _ => {}
                 }
             }
@@ -39,11 +41,8 @@ mod bot_bloc_test {
 
     #[tokio::test]
     async fn can_send_event_and_get_state_throw_webhook() {
-        let token = "1380495565:AAEqMVRo78_3RJgmWmPQ8HZnJAuKZaRLUXU";
+        let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
-
-        // let me = bot.get_me().send().await.unwrap();
-        // let bot_name = me.user.username.unwrap();
 
         let bloc = BotBloc::new(bot);
         let bloc_reference_counter = Arc::new(bloc);
@@ -60,7 +59,6 @@ mod bot_bloc_test {
 
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }
-                    BotBlocState::TextToChatSendSuccessful { .. } => {}
                     _ => {}
                 }
             }

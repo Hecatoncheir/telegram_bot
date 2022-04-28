@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use tokio::{fs, task};
 
 use teloxide_core::adaptors::AutoSend;
-use teloxide_core::requests::Requester;
+use teloxide_core::requests::{Request, Requester};
 use teloxide_core::types::{ChatId, Message, Update};
 use teloxide_core::Bot;
 
@@ -146,22 +146,22 @@ impl BotBloc {
                     let _ = state_controller.send(state).await;
                 }
                 BotBlocEvent::GetFile { file_id } => {
-                    let file = match bot.get_file(&file_id).await {
-                        Ok(file) => file,
+                    match bot.get_file(&file_id).send().await {
+                        Ok(file) => {
+                            let state = BotBlocState::GetFileSuccessful { file_id, file };
+                            let _ = state_controller.send(state).await;
+                        }
                         Err(error) => {
                             let log_message =
                                 format!("Can't get file details. Error: {:?}.", error);
                             log::warn!("{}", log_message);
 
                             let state = BotBlocState::GetFileUnsuccessful { file_id };
-                            let _ = state_controller.send(state);
+                            let _ = state_controller.send(state).await;
 
                             return;
                         }
                     };
-
-                    let state = BotBlocState::GetFileSuccessful { file_id, file };
-                    let _ = state_controller.send(state);
                 }
                 BotBlocEvent::DownloadFile {
                     file_path,
@@ -177,7 +177,7 @@ impl BotBloc {
                                 file_path,
                                 destination_path,
                             };
-                            let _ = state_controller.send(state);
+                            let _ = state_controller.send(state).await;
 
                             return;
                         }
@@ -189,7 +189,7 @@ impl BotBloc {
                                 file_path,
                                 destination_path,
                             };
-                            let _ = state_controller.send(state);
+                            let _ = state_controller.send(state).await;
                         }
                         Err(error) => {
                             let log_message = format!("Can't download file. Error: {:?}.", error);
@@ -199,7 +199,7 @@ impl BotBloc {
                                 file_path,
                                 destination_path,
                             };
-                            let _ = state_controller.send(state);
+                            let _ = state_controller.send(state).await;
                         }
                     };
                 }
