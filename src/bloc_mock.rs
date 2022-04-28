@@ -1,5 +1,6 @@
 use async_channel::{Receiver, Sender};
 use async_trait::async_trait;
+use teloxide::prelude::DependencyMap;
 
 use crate::bloc::BLoC;
 use crate::bloc_event::BotBlocEvent;
@@ -64,6 +65,7 @@ impl BLoC<BotBlocEvent, BotBlocState> for BotBlocMock {
     async fn run_with_handler_and_webhook(
         &self,
         _: crate::bloc::BotUpdateHandler,
+        _: DependencyMap,
         _: String,
         _: String,
     ) {
@@ -77,6 +79,7 @@ impl BLoC<BotBlocEvent, BotBlocState> for BotBlocMock {
     async fn run_with_handler_and_webhook_tls(
         &self,
         _: crate::bloc::BotUpdateHandler,
+        _: DependencyMap,
         _: String,
         _: String,
         _: String,

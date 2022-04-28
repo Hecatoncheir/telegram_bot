@@ -28,17 +28,8 @@ async fn can_send_event_and_get_state_throw_webhook() {
         }
     });
 
-    tokio::spawn(async move {
-        let bloc_for_run = bloc_reference_counter.clone();
-        bloc_for_run.run().await;
-    });
-
-    match signal::ctrl_c().await {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
-        }
-    }
+    let bloc_for_run = bloc_reference_counter.clone();
+    bloc_for_run.run().await;
 }
 ```
 
@@ -73,17 +64,8 @@ async fn can_send_event_and_get_state_throw_webhook() {
     let webhook = "https://b48d-128-69-253-220.ngrok.io".to_string();
     let host = "127.0.0.1:8000".to_string();
 
-    tokio::spawn(async move {
-        let bloc_for_run = bloc_reference_counter.clone();
-        bloc_for_run.run_with_webhook(webhook, host).await;
-    });
-
-    match signal::ctrl_c().await {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
-        }
-    }
+    let bloc_for_run = bloc_reference_counter.clone();
+    bloc_for_run.run_with_webhook(webhook, host).await;
 }
 ```
 
@@ -163,16 +145,7 @@ async fn main() {
         }
     });
 
-    tokio::spawn(async move {
-        let bloc_for_run = bloc_reference_counter.clone();
-        bloc_for_run.run().await;
-    });
-
-    match signal::ctrl_c().await {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
-        }
-    }
+    let bloc_for_run = bloc_reference_counter.clone();
+    bloc_for_run.run().await;
 }
 ```
