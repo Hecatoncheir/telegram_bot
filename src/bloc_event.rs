@@ -2,7 +2,7 @@ use std::fmt;
 use teloxide_core::types::ReplyMarkup;
 
 #[derive(Clone)]
-pub enum BotBlocEvent {
+pub enum BlocEvent {
     TextToChatSend {
         chat_id: i64,
         text: String,
@@ -23,21 +23,21 @@ pub enum BotBlocEvent {
     },
 }
 
-impl fmt::Display for BotBlocEvent {
+impl fmt::Display for BlocEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            BotBlocEvent::TextToChatSend { chat_id, text } => f.write_str(&format!(
+            BlocEvent::TextToChatSend { chat_id, text } => f.write_str(&format!(
                 "TextToChatSend{{chat_id:{}, text:{}}}",
                 chat_id, text
             )),
-            BotBlocEvent::TextToChatSendWithMarkup { chat_id, text, .. } => f.write_str(&format!(
+            BlocEvent::TextToChatSendWithMarkup { chat_id, text, .. } => f.write_str(&format!(
                 "TextToChatSendWithMarkup{{chat_id:{}, text:{}}}",
                 chat_id, text
             )),
-            BotBlocEvent::GetFile { file_id } => {
+            BlocEvent::GetFile { file_id } => {
                 f.write_str(&format!("GetFile{{file_id:{}}}", file_id))
             }
-            BotBlocEvent::DownloadFile {
+            BlocEvent::DownloadFile {
                 file_path,
                 destination_path,
             } => f.write_str(&format!(

@@ -3,23 +3,23 @@ use async_trait::async_trait;
 use teloxide::prelude::DependencyMap;
 
 use crate::bloc::BLoC;
-use crate::bloc_event::BotBlocEvent;
-use crate::bloc_state::BotBlocState;
+use crate::bloc_event::BlocEvent;
+use crate::bloc_state::BlocState;
 
 #[derive(Clone)]
-pub struct BotBlocMock {
-    event_controller: Sender<BotBlocEvent>,
-    event_stream: Receiver<BotBlocEvent>,
-    state_controller: Sender<BotBlocState>,
-    state_stream: Receiver<BotBlocState>,
+pub struct BlocMock {
+    event_controller: Sender<BlocEvent>,
+    event_stream: Receiver<BlocEvent>,
+    state_controller: Sender<BlocState>,
+    state_stream: Receiver<BlocState>,
 }
 
-impl BotBlocMock {
-    pub fn new() -> BotBlocMock {
-        let (event_controller, event_stream) = async_channel::unbounded::<BotBlocEvent>();
-        let (state_controller, state_stream) = async_channel::unbounded::<BotBlocState>();
+impl BlocMock {
+    pub fn new() -> BlocMock {
+        let (event_controller, event_stream) = async_channel::unbounded::<BlocEvent>();
+        let (state_controller, state_stream) = async_channel::unbounded::<BlocState>();
 
-        BotBlocMock {
+        BlocMock {
             event_controller,
             event_stream,
             state_controller,
@@ -27,26 +27,26 @@ impl BotBlocMock {
         }
     }
 
-    pub fn get_state_controller(&self) -> Sender<BotBlocState> {
+    pub fn get_state_controller(&self) -> Sender<BlocState> {
         self.state_controller.clone()
     }
-    pub fn get_event_stream(&self) -> Receiver<BotBlocEvent> {
+    pub fn get_event_stream(&self) -> Receiver<BlocEvent> {
         self.event_stream.clone()
     }
 }
 
-impl Default for BotBlocMock {
+impl Default for BlocMock {
     fn default() -> Self {
-        BotBlocMock::new()
+        BlocMock::new()
     }
 }
 
 #[async_trait]
-impl BLoC<BotBlocEvent, BotBlocState> for BotBlocMock {
-    fn get_controller(&self) -> Sender<BotBlocEvent> {
+impl BLoC<BlocEvent, BlocState> for BlocMock {
+    fn get_controller(&self) -> Sender<BlocEvent> {
         self.event_controller.clone()
     }
-    fn get_stream(&self) -> Receiver<BotBlocState> {
+    fn get_stream(&self) -> Receiver<BlocState> {
         self.state_stream.clone()
     }
 

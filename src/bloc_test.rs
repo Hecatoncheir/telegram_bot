@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod bot_bloc_test {
-    use crate::bloc::{BLoC, BotBloc, BotBlocEvent, BotBlocState};
+    use crate::bloc::{BLoC, Bloc, BlocEvent, BlocState};
     use std::sync::Arc;
     use teloxide_core::requests::RequesterExt;
 
@@ -9,25 +9,25 @@ mod bot_bloc_test {
         let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
 
-        let bloc = BotBloc::new(bot);
+        let bloc = Bloc::new(bot);
         let bloc_reference_counter = Arc::new(bloc);
 
         let bloc_for_spawn = bloc_reference_counter.clone();
         tokio::spawn(async move {
             while let Ok(state) = bloc_for_spawn.get_stream().recv().await {
                 match state {
-                    BotBlocState::Message { message } => {
+                    BlocState::Message { message } => {
                         let chat_id = message.chat.id.0;
                         let text = message.text().unwrap().to_string();
 
-                        let event = BotBlocEvent::TextToChatSend { chat_id, text };
+                        let event = BlocEvent::TextToChatSend { chat_id, text };
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }
-                    BotBlocState::Command { message } => {
+                    BlocState::Command { message } => {
                         let chat_id = message.chat.id.0;
                         let text = message.text().unwrap().to_string();
 
-                        let event = BotBlocEvent::TextToChatSend { chat_id, text };
+                        let event = BlocEvent::TextToChatSend { chat_id, text };
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }
                     _ => {}
@@ -44,18 +44,18 @@ mod bot_bloc_test {
         let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
 
-        let bloc = BotBloc::new(bot);
+        let bloc = Bloc::new(bot);
         let bloc_reference_counter = Arc::new(bloc);
 
         let bloc_for_spawn = bloc_reference_counter.clone();
         tokio::spawn(async move {
             while let Ok(state) = bloc_for_spawn.get_stream().recv().await {
                 match state {
-                    BotBlocState::Message { message } => {
+                    BlocState::Message { message } => {
                         let chat_id = message.chat.id.0;
                         let text = message.text().unwrap().to_string();
 
-                        let event = BotBlocEvent::TextToChatSend { chat_id, text };
+                        let event = BlocEvent::TextToChatSend { chat_id, text };
 
                         let _ = bloc_for_spawn.get_controller().send(event).await;
                     }
