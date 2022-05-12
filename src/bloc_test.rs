@@ -1,10 +1,12 @@
 #[cfg(test)]
 mod bot_bloc_test {
-    use crate::bloc_event::BlocEvent;
-    use crate::bloc_state::BlocState;
-    use crate::bloc_with_autosend_bot::{BLoC, Bloc};
+    use crate::bloc::BLoC;
     use std::sync::Arc;
     use teloxide_core::requests::RequesterExt;
+
+    use crate::bloc_event::BlocEvent;
+    use crate::bloc_state::BlocState;
+    use crate::bloc_with_autosend_bot::Bloc;
 
     #[tokio::test]
     async fn can_send_event_and_get_state() {

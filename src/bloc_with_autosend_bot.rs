@@ -17,45 +17,10 @@ use teloxide_core::net::Download;
 use crate::bloc_event::BlocEvent;
 use crate::bloc_state::BlocState;
 
-use crate::bloc::BotUpdateHandler;
+use crate::bloc::{BLoC, BotUpdateHandler};
 
 use crate::webhook::webhook_with_tls::webhook_with_tls;
 use crate::webhook::webhook_without_tls::webhook_without_tls;
-
-#[async_trait]
-pub trait BLoC<Event, State> {
-    fn get_controller(&self) -> Sender<Event>;
-    fn get_stream(&self) -> Receiver<State>;
-
-    async fn run(&self);
-    async fn run_with_handler(&self, handler: BotUpdateHandler);
-
-    async fn run_with_webhook(&self, webhook: String, host: String);
-    async fn run_with_handler_and_webhook(
-        &self,
-        handler: BotUpdateHandler,
-        mut dependencies: DependencyMap,
-        webhook: String,
-        host: String,
-    );
-
-    async fn run_with_webhook_tls(
-        &self,
-        webhook: String,
-        host: String,
-        cert_path: String,
-        key_path: String,
-    );
-    async fn run_with_handler_and_webhook_tls(
-        &self,
-        handler: BotUpdateHandler,
-        mut dependencies: DependencyMap,
-        webhook: String,
-        host: String,
-        cert_path: String,
-        key_path: String,
-    );
-}
 
 #[derive(Clone)]
 pub struct Bloc {
