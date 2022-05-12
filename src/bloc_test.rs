@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod bot_bloc_test {
-    use crate::bloc::{BLoC, Bloc, BlocEvent, BlocState};
+    use crate::bloc_event::BlocEvent;
+    use crate::bloc_state::BlocState;
+    use crate::bloc_with_autosend_bot::{BLoC, Bloc};
     use std::sync::Arc;
     use teloxide_core::requests::RequesterExt;
 
