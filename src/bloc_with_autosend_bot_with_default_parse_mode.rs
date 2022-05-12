@@ -18,13 +18,12 @@ use crate::bloc_event::BlocEvent;
 use crate::bloc_state::BlocState;
 
 use crate::bloc::{BLoC, BotUpdateHandler};
-use crate::bloc_with_autosend_bot::Bloc;
 
 use crate::webhook::webhook_with_tls_for_bot_with_default_parse_mode::webhook_with_tls_for_bot_with_default_parse_mode;
 use crate::webhook::webhook_without_tls_for_bot_with_default_parse_mode::webhook_without_tls_for_bot_with_default_parse_mode;
 
 #[derive(Clone)]
-pub struct BlocWithDefaultParseMode {
+pub struct Bloc {
     bot: AutoSend<DefaultParseMode<Bot>>,
     event_controller: Sender<BlocEvent>,
     event_stream: Receiver<BlocEvent>,
@@ -32,12 +31,12 @@ pub struct BlocWithDefaultParseMode {
     state_stream: Receiver<BlocState>,
 }
 
-impl BlocWithDefaultParseMode {
-    pub fn new(bot: AutoSend<DefaultParseMode<Bot>>) -> BlocWithDefaultParseMode {
+impl Bloc {
+    pub fn new(bot: AutoSend<DefaultParseMode<Bot>>) -> Bloc {
         let (event_controller, event_stream) = async_channel::unbounded::<BlocEvent>();
         let (state_controller, state_stream) = async_channel::unbounded::<BlocState>();
 
-        BlocWithDefaultParseMode {
+        Bloc {
             bot,
             event_controller,
             event_stream,
@@ -173,7 +172,7 @@ impl BlocWithDefaultParseMode {
 }
 
 #[async_trait]
-impl BLoC<BlocEvent, BlocState> for BlocWithDefaultParseMode {
+impl BLoC<BlocEvent, BlocState> for Bloc {
     fn get_controller(&self) -> Sender<BlocEvent> {
         self.event_controller.clone()
     }
@@ -182,7 +181,7 @@ impl BLoC<BlocEvent, BlocState> for BlocWithDefaultParseMode {
     }
 
     async fn run(&self) {
-        let handler = BlocWithDefaultParseMode::default_update_handler();
+        let handler = Bloc::default_update_handler();
         self.run_with_handler(handler).await;
     }
 
@@ -220,7 +219,7 @@ impl BLoC<BlocEvent, BlocState> for BlocWithDefaultParseMode {
     }
 
     async fn run_with_webhook(&self, webhook: String, host: String) {
-        let handler = BlocWithDefaultParseMode::default_update_handler();
+        let handler = Bloc::default_update_handler();
         let dependencies = dptree::deps![self.bot.clone(), self.state_controller.clone()];
 
         self.run_with_handler_and_webhook(handler, dependencies, webhook, host)
