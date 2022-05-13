@@ -160,3 +160,43 @@ async fn main() {
     bloc_for_run.run().await;
 }
 ```
+
+#### Send media
+
+```rust
+use std::sync::Arc;
+
+use teloxide_core::requests::RequesterExt;
+use teloxide_core::types::{MediaKind, MessageKind};
+
+use telegram_bot::bloc::{BLoC, Bloc};
+use telegram_bot::bloc_event::BlocEvent;
+use telegram_bot::bloc_event::BlocEvent::GetFile;
+use telegram_bot::bloc_state::BlocState;
+
+#[tokio::main]
+async fn main() {
+    let token = "";
+    let bot = teloxide::Bot::new(token).auto_send();
+
+    let bloc = Bloc::new(bot);
+    let bloc_reference_counter = Arc::new(bloc);
+
+    let bloc_for_spawn = bloc_reference_counter.clone();
+    tokio::spawn(async move {
+        let file_path = "some_file.png";
+        let file = InputFile::file(file_path);
+        let photo = InputMedia::Photo(InputMediaPhoto::new(file.clone()));
+
+        let event = MediaToChatSend {
+            chat_id: 897525129,
+            media: vec![photo],
+        };
+        bloc_for_spawn.get_controller().send(event).await.unwrap();
+    });
+
+    let bloc_for_run = bloc_reference_counter.clone();
+    bloc_for_run.run().await;
+}
+
+```

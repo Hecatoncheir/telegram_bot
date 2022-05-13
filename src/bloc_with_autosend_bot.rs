@@ -166,6 +166,13 @@ impl Bloc {
                         }
                     };
                 }
+                BlocEvent::MediaToChatSend { chat_id, media } => {
+                    bot.send_media_group(ChatId(chat_id), media.clone())
+                        .await
+                        .unwrap();
+                    let state = BlocState::MediaToChatSendSuccessful { chat_id, media };
+                    let _ = state_controller.send(state).await;
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 use std::fmt;
-use teloxide_core::types::ReplyMarkup;
+use teloxide_core::types::{InputMedia, ReplyMarkup};
 
 #[derive(Clone)]
 pub enum BlocEvent {
@@ -12,14 +12,16 @@ pub enum BlocEvent {
         text: String,
         markup: ReplyMarkup,
     },
-
     GetFile {
         file_id: String,
     },
-
     DownloadFile {
         file_path: String,
         destination_path: String,
+    },
+    MediaToChatSend {
+        chat_id: i64,
+        media: Vec<InputMedia>,
     },
 }
 
@@ -44,6 +46,9 @@ impl fmt::Display for BlocEvent {
                 "GetFile{{file_path:{}, destination_path:{}}}",
                 file_path, destination_path
             )),
+            BlocEvent::MediaToChatSend { chat_id, .. } => {
+                f.write_str(&format!("MediaToChatSend{{chat_id:{}}}", chat_id))
+            }
         }
     }
 }

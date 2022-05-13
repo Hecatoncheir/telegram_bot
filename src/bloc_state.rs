@@ -1,5 +1,5 @@
 use std::fmt;
-use teloxide_core::types::{File, Message};
+use teloxide_core::types::{File, InputMedia, Message};
 
 #[derive(Clone)]
 pub enum BlocState {
@@ -27,6 +27,10 @@ pub enum BlocState {
     DownloadFileUnsuccessful {
         file_path: String,
         destination_path: String,
+    },
+    MediaToChatSendSuccessful {
+        chat_id: i64,
+        media: Vec<InputMedia>,
     },
 }
 
@@ -64,6 +68,9 @@ impl fmt::Display for BlocState {
                 "DownloadFileUnsuccessful{{file_path:{}, destination_path:{}}}",
                 file_path, destination_path
             )),
+            BlocState::MediaToChatSendSuccessful { chat_id, .. } => {
+                f.write_str(&format!("MediaToChatSendSuccessful{{chat_id:{}}}", chat_id))
+            }
         }
     }
 }
