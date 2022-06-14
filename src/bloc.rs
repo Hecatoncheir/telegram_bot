@@ -4,11 +4,12 @@ mod bloc_test;
 use async_channel::{Receiver, Sender};
 use async_trait::async_trait;
 
+use teloxide::RequestError;
 use teloxide::dispatching::DpHandlerDescription;
 use teloxide::prelude::{DependencyMap, Handler};
 
 pub(crate) type BotUpdateHandler =
-    Handler<'static, DependencyMap, Result<(), teloxide_core::RequestError>, DpHandlerDescription>;
+    Handler<'static, DependencyMap, Result<(), RequestError>, DpHandlerDescription>;
 
 #[async_trait]
 pub trait BLoC<Event, State> {

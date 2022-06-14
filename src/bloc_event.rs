@@ -1,5 +1,6 @@
 use std::fmt;
-use teloxide_core::types::{InputMedia, ReplyMarkup};
+
+use teloxide::types::{ReplyMarkup, InputMedia};
 
 #[derive(Clone)]
 pub enum BlocEvent {

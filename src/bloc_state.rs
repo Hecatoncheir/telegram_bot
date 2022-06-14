@@ -1,5 +1,6 @@
 use std::fmt;
-use teloxide_core::types::{File, InputMedia, Message};
+
+use teloxide::types::{File, InputMedia, Message};
 
 #[derive(Clone)]
 pub enum BlocState {

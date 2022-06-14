@@ -2,7 +2,8 @@
 mod bot_bloc_test {
     use crate::bloc::BLoC;
     use std::sync::Arc;
-    use teloxide_core::requests::RequesterExt;
+
+    use teloxide::prelude::RequesterExt;
 
     use crate::bloc_event::BlocEvent;
     use crate::bloc_state::BlocState;
@@ -78,10 +79,12 @@ mod bot_bloc_test {
 
 #[cfg(test)]
 mod bot_bloc_with_default_parse_mode_test {
-    use crate::bloc::BLoC;
     use std::sync::Arc;
-    use teloxide_core::requests::RequesterExt;
-    use teloxide_core::types::ParseMode;
+
+    use teloxide::prelude::RequesterExt;
+    use teloxide::types::ParseMode;
+
+    use crate::bloc::BLoC;
 
     use crate::bloc_event::BlocEvent;
     use crate::bloc_state::BlocState;

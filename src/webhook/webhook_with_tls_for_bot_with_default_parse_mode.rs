@@ -1,19 +1,19 @@
 use std::{convert::Infallible, net::SocketAddr};
 
-use teloxide::dispatching::stop_token::AsyncStopToken;
-use teloxide::dispatching::update_listeners;
-use teloxide::dispatching::update_listeners::StatefulListener;
-
-use teloxide_core::adaptors::{AutoSend, DefaultParseMode};
-use teloxide_core::requests::Requester;
-use teloxide_core::types::Update;
-
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use url::Url;
+
 use warp::http::StatusCode;
 use warp::Filter;
+
+use teloxide::adaptors::{AutoSend, DefaultParseMode};
+use teloxide::dispatching::stop_token::AsyncStopToken;
+use teloxide::dispatching::update_listeners;
+use teloxide::dispatching::update_listeners::StatefulListener;
+use teloxide::prelude::Requester;
+use teloxide::types::Update;
 
 use super::handle_rejection::handle_rejection;
 

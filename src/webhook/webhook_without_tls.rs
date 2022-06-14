@@ -4,16 +4,16 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use url::Url;
+
 use warp::http::StatusCode;
 use warp::Filter;
 
-use teloxide_core::adaptors::AutoSend;
-use teloxide_core::requests::Requester;
-use teloxide_core::types::Update;
-
+use teloxide::adaptors::AutoSend;
 use teloxide::dispatching::stop_token::AsyncStopToken;
 use teloxide::dispatching::update_listeners;
 use teloxide::dispatching::update_listeners::StatefulListener;
+use teloxide::prelude::Requester;
+use teloxide::types::Update;
 
 use super::handle_rejection::handle_rejection;
 

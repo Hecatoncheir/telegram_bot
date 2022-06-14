@@ -1,18 +1,16 @@
 use async_channel::{Receiver, Sender};
 use async_trait::async_trait;
+
 use tokio::{fs, signal, task};
 
-use teloxide_core::adaptors::AutoSend;
-use teloxide_core::requests::{Request, Requester};
-use teloxide_core::types::{ChatId, Message, Update};
-use teloxide_core::Bot;
-
+use teloxide::adaptors::AutoSend;
 use teloxide::dispatching::{Dispatcher, UpdateFilterExt};
 use teloxide::error_handlers::LoggingErrorHandler;
+use teloxide::net::Download;
 use teloxide::payloads::SendMessageSetters;
-use teloxide::prelude::DependencyMap;
-use teloxide::{dptree, respond};
-use teloxide_core::net::Download;
+use teloxide::prelude::{DependencyMap, Request, Requester};
+use teloxide::types::{ChatId, Message, Update};
+use teloxide::{dptree, respond, Bot};
 
 use crate::bloc_event::BlocEvent;
 use crate::bloc_state::BlocState;
