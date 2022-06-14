@@ -10,6 +10,7 @@ mod bot_bloc_test {
     use crate::bloc_with_autosend_bot::Bloc;
 
     #[tokio::test]
+    #[ignore = "for local tests only"]
     async fn can_send_event_and_get_state() {
         let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
@@ -45,6 +46,7 @@ mod bot_bloc_test {
     }
 
     #[tokio::test]
+    #[ignore = "for local tests only"]
     async fn can_send_event_and_get_state_throw_webhook() {
         let token = "";
         let bot = teloxide::Bot::new(token).auto_send();
@@ -91,6 +93,7 @@ mod bot_bloc_with_default_parse_mode_test {
     use crate::bloc_with_autosend_bot_with_default_parse_mode::Bloc;
 
     #[tokio::test]
+    #[ignore = "for local tests only"]
     async fn can_send_event_and_get_state() {
         let token = "";
         let bot = teloxide::Bot::new(token)
@@ -128,6 +131,7 @@ mod bot_bloc_with_default_parse_mode_test {
     }
 
     #[tokio::test]
+    #[ignore = "for local tests only"]
     async fn can_send_event_and_get_state_throw_webhook() {
         let token = "";
         let bot = teloxide::Bot::new(token)
