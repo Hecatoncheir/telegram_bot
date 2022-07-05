@@ -1897,7 +1897,7 @@ checksum = "20f34339676cdcab560c9a82300c4c2581f68b9369aedf0fae86f2ff9565ff3e"
 
 [[package]]
 name = "telegram_bot"
-version = "0.6.5"
+version = "0.6.6"
 dependencies = [
  "async-channel",
  "async-trait",
