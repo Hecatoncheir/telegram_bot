@@ -37,6 +37,7 @@ pub async fn webhook_with_tls(
                 .expect("Cannot send an incoming update from the webhook");
             StatusCode::OK
         })
+        .or(crate::webhook::health())
         .recover(handle_rejection);
 
     let (stop_token, stop_flag) = AsyncStopToken::new_pair();
